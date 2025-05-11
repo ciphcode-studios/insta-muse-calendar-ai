@@ -7,11 +7,13 @@ import { generateContentCalendar } from "@/services/contentGenerator";
 import { Toaster } from "sonner";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Instagram, Calendar, Image, ArrowRight } from "lucide-react";
+import { Instagram, Calendar, Image, ArrowRight, FileText } from "lucide-react";
 import { useAuth } from '@/context/AuthContext';
 import UserProfile from '@/components/UserProfile';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { Link } from 'react-router-dom';
+import { Button } from "@/components/ui/button";
 
 enum Step {
   Registration,
@@ -80,7 +82,15 @@ const Index = () => {
             Insta Content Planner
           </h1>
         </div>
-        <UserProfile />
+        <div className="flex items-center space-x-4">
+          <Link to="/calendar">
+            <Button variant="outline" className="flex items-center space-x-2">
+              <FileText className="h-4 w-4" />
+              <span>My Calendars</span>
+            </Button>
+          </Link>
+          <UserProfile />
+        </div>
       </header>
 
       <main className="container mx-auto px-4 py-8">
