@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import UserRegistration, { UserData } from "@/components/UserRegistration";
 import ContentPreferences, { ContentPreference } from "@/components/ContentPreferences";
@@ -7,7 +6,7 @@ import { generateContentCalendar } from "@/services/contentGenerator";
 import { Toaster } from "sonner";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Instagram } from "lucide-react";
+import { Instagram, Calendar, Image, ArrowRight } from "lucide-react";
 
 enum Step {
   Registration,
