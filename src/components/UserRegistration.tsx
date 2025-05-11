@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Instagram } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from '@/context/AuthContext';
 
 interface UserRegistrationProps {
   onRegistrationComplete: (userData: UserData) => void;
@@ -17,38 +18,34 @@ export interface UserData {
 }
 
 const UserRegistration = ({ onRegistrationComplete }: UserRegistrationProps) => {
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
+  const { user } = useAuth();
+  const [username, setUsername] = useState(user?.user_metadata?.username || '');
+  const [email, setEmail] = useState(user?.email || '');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!username || !email || !password) {
-      toast.error("All fields are required");
+    if (!username || !email) {
+      toast.error("Username and email are required");
       return;
     }
     
-    if (password.length < 6) {
-      toast.error("Password must be at least 6 characters");
-      return;
-    }
-
     setIsLoading(true);
     
-    // Simulate registration process
+    // If user is authenticated, we don't need the password
+    const userData = {
+      username,
+      email,
+      password: '' // We don't store or pass the actual password
+    };
+    
     setTimeout(() => {
-      const userData = {
-        username,
-        email,
-        password
-      };
-      
-      toast.success("Registration successful!");
+      toast.success("Profile updated!");
       setIsLoading(false);
       onRegistrationComplete(userData);
-    }, 1500);
+    }, 500);
   };
 
   return (
@@ -57,9 +54,9 @@ const UserRegistration = ({ onRegistrationComplete }: UserRegistrationProps) => 
         <div className="rounded-full bg-gradient-to-br from-pink-500 via-purple-500 to-blue-500 p-3">
           <Instagram className="h-10 w-10 text-white" />
         </div>
-        <CardTitle className="text-2xl font-bold text-center mt-4">Create your account</CardTitle>
+        <CardTitle className="text-2xl font-bold text-center mt-4">Your Profile</CardTitle>
         <CardDescription className="text-center">
-          Enter your details below to create your account
+          Update your account details
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -81,19 +78,9 @@ const UserRegistration = ({ onRegistrationComplete }: UserRegistrationProps) => 
               type="email"
               placeholder="your@email.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <label htmlFor="password" className="text-sm font-medium">Password</label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
+              readOnly
+              disabled
+              className="bg-gray-50"
             />
           </div>
           <Button 
@@ -101,13 +88,13 @@ const UserRegistration = ({ onRegistrationComplete }: UserRegistrationProps) => 
             className="w-full mt-6 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 hover:from-pink-600 hover:via-purple-600 hover:to-blue-600"
             disabled={isLoading}
           >
-            {isLoading ? "Registering..." : "Create Account"}
+            {isLoading ? "Updating..." : "Update Profile"}
           </Button>
         </form>
       </CardContent>
       <CardFooter className="flex justify-center">
         <p className="text-sm text-gray-500">
-          By signing up, you agree to our Terms and Privacy Policy
+          Your profile information is securely stored
         </p>
       </CardFooter>
     </Card>

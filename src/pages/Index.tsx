@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import UserRegistration, { UserData } from "@/components/UserRegistration";
 import ContentPreferences, { ContentPreference } from "@/components/ContentPreferences";
@@ -7,6 +8,10 @@ import { Toaster } from "sonner";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Instagram, Calendar, Image, ArrowRight } from "lucide-react";
+import { useAuth } from '@/context/AuthContext';
+import UserProfile from '@/components/UserProfile';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 enum Step {
   Registration,
@@ -15,6 +20,7 @@ enum Step {
 }
 
 const Index = () => {
+  const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState<Step>(Step.Registration);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [preferences, setPreferences] = useState<ContentPreference | null>(null);
@@ -31,11 +37,28 @@ const Index = () => {
     setIsLoading(true);
     
     try {
+      // Save preferences to Supabase
+      if (user) {
+        const { error } = await supabase.from('content_preferences').upsert({
+          user_id: user.id,
+          content_type: prefs.contentTypes.join(','),
+          target_audience: prefs.targetAudience,
+          industry: prefs.description,
+          tone: prefs.postFrequency
+        });
+        
+        if (error) {
+          console.error('Error saving preferences:', error);
+          toast.error('Failed to save preferences');
+        }
+      }
+      
       const generatedPosts = await generateContentCalendar(prefs);
       setPosts(generatedPosts);
       setCurrentStep(Step.Calendar);
     } catch (error) {
       console.error("Error generating content calendar:", error);
+      toast.error('Failed to generate content calendar');
     } finally {
       setIsLoading(false);
     }
@@ -48,7 +71,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white">
       <Toaster />
-      <header className="px-4 py-6 flex justify-center">
+      <header className="px-4 py-6 flex justify-between items-center">
         <div className="flex items-center space-x-2">
           <div className="rounded-full bg-gradient-to-br from-pink-500 via-purple-500 to-blue-500 p-2">
             <Instagram className="h-6 w-6 text-white" />
@@ -57,6 +80,7 @@ const Index = () => {
             Insta Content Planner
           </h1>
         </div>
+        <UserProfile />
       </header>
 
       <main className="container mx-auto px-4 py-8">
@@ -132,11 +156,11 @@ const Index = () => {
               </>
             )}
 
-            {currentStep === Step.Preferences && userData && (
+            {currentStep === Step.Preferences && (
               <>
                 <div className="text-center mb-8">
                   <h1 className="text-2xl font-bold">
-                    Welcome, @{userData.username}!
+                    Welcome, {user?.user_metadata?.username || user?.email?.split('@')[0]}!
                   </h1>
                   <p className="text-muted-foreground">
                     Let's create your personalized content calendar
