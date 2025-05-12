@@ -53,10 +53,10 @@ const InstagramCalendarForm = ({ onFormSubmit }: InstagramCalendarFormProps) => 
       if (user) {
         const { error } = await supabase.from('content_preferences').upsert({
           user_id: user.id,
-          name,
-          instagram_handle: instagramHandle,
-          post_frequency: postFrequency,
-          content_description: contentDescription
+          content_type: instagramHandle, // Map to existing column content_type
+          target_audience: name, // Map to existing column target_audience 
+          industry: contentDescription, // Map to existing column industry
+          tone: postFrequency // Map to existing column tone
         });
         
         if (error) {
