@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Calendar, Image, ArrowLeft, ArrowRight, Search, Download } from "lucide-react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/context/AuthContext';
 
 export interface PostSuggestion {
   day: string;
@@ -20,9 +22,11 @@ interface ContentCalendarProps {
 }
 
 const ContentCalendar = ({ posts, onBack }: ContentCalendarProps) => {
+  const { user } = useAuth();
   const [currentWeek, setCurrentWeek] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredPosts, setFilteredPosts] = useState<PostSuggestion[]>(posts);
+  const [isSaving, setIsSaving] = useState(false);
   
   const weeksCount = Math.ceil(filteredPosts.length / 7);
   
@@ -40,9 +44,39 @@ const ContentCalendar = ({ posts, onBack }: ContentCalendarProps) => {
     }
   };
 
-  const saveToCalendar = () => {
-    // This would integrate with calendar API in a real app
-    toast.success("Calendar saved to your account!");
+  const saveToCalendar = async () => {
+    if (!user) {
+      toast.error("You must be logged in to save calendars");
+      return;
+    }
+    
+    setIsSaving(true);
+    
+    try {
+      // Save the calendar to Supabase
+      const calendarName = `Instagram Calendar - ${new Date().toLocaleDateString()}`;
+      
+      const { data: calendarData, error: calendarError } = await supabase
+        .from('content_calendars')
+        .insert({
+          user_id: user.id,
+          name: calendarName,
+          posts: posts
+        })
+        .select('id')
+        .single();
+        
+      if (calendarError) {
+        throw calendarError;
+      }
+      
+      toast.success("Calendar saved to your account!");
+    } catch (error) {
+      console.error("Error saving calendar:", error);
+      toast.error("Failed to save calendar. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const exportCalendar = () => {
@@ -91,9 +125,13 @@ const ContentCalendar = ({ posts, onBack }: ContentCalendarProps) => {
           <p className="text-muted-foreground">Week {currentWeek + 1} of {weeksCount}</p>
         </div>
         <div className="flex space-x-2">
-          <Button onClick={saveToCalendar} variant="outline">
+          <Button 
+            onClick={saveToCalendar} 
+            variant="outline"
+            disabled={isSaving}
+          >
             <Calendar className="mr-2 h-4 w-4" />
-            Save
+            {isSaving ? 'Saving...' : 'Save'}
           </Button>
           <Button onClick={exportCalendar}>
             <Download className="mr-2 h-4 w-4" />

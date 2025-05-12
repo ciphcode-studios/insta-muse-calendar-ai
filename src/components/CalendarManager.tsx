@@ -3,55 +3,73 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search, Download, FileText, CalendarPlus } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Search, Download, FileText, CalendarPlus, Eye, Calendar } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import ContentCalendar, { PostSuggestion } from './ContentCalendar';
+
+interface SavedCalendar {
+  id: string;
+  name: string;
+  created_at: string;
+  posts: PostSuggestion[];
+}
 
 export const CalendarManager = () => {
   const { user } = useAuth();
-  const [hasCalendar, setHasCalendar] = useState<boolean | null>(null);
+  const [savedCalendars, setSavedCalendars] = useState<SavedCalendar[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCalendar, setSelectedCalendar] = useState<SavedCalendar | null>(null);
   const navigate = useNavigate();
   
   useEffect(() => {
-    const checkCalendarExists = async () => {
+    const fetchCalendars = async () => {
       if (!user) return;
       
       try {
+        setIsLoading(true);
         const { data, error } = await supabase
-          .from('content_preferences')
-          .select('id')
+          .from('content_calendars')
+          .select('*')
           .eq('user_id', user.id)
-          .single();
+          .order('created_at', { ascending: false });
           
-        if (error && error.code !== 'PGRST116') {
-          console.error('Error checking calendar:', error);
-          toast.error('Failed to check if you have an existing calendar');
-          setHasCalendar(false);
-        } else {
-          setHasCalendar(!!data);
+        if (error) {
+          throw error;
+        }
+        
+        if (data) {
+          setSavedCalendars(data as SavedCalendar[]);
         }
       } catch (error) {
-        console.error('Error checking calendar:', error);
-        setHasCalendar(false);
+        console.error('Error fetching calendars:', error);
+        toast.error('Failed to load your calendars');
       } finally {
         setIsLoading(false);
       }
     };
     
-    checkCalendarExists();
+    fetchCalendars();
   }, [user]);
   
   const handleCreateCalendar = () => {
     navigate('/');
   };
   
-  const handleExportCalendar = () => {
+  const handleExportCalendar = (calendar: SavedCalendar) => {
     // This would generate a downloadable calendar file in a real app
-    toast.success('Calendar exported successfully!');
+    toast.success(`Calendar "${calendar.name}" exported successfully!`);
+  };
+  
+  const handleViewCalendar = (calendar: SavedCalendar) => {
+    setSelectedCalendar(calendar);
+  };
+  
+  const handleBackToList = () => {
+    setSelectedCalendar(null);
   };
   
   const handleSearch = (e: React.FormEvent) => {
@@ -73,7 +91,26 @@ export const CalendarManager = () => {
     );
   }
   
-  if (!hasCalendar) {
+  if (selectedCalendar) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <Button variant="outline" onClick={handleBackToList}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Calendars
+          </Button>
+          <h2 className="text-xl font-semibold">{selectedCalendar.name}</h2>
+          <Button variant="outline" onClick={() => handleExportCalendar(selectedCalendar)}>
+            <Download className="mr-2 h-4 w-4" />
+            Export
+          </Button>
+        </div>
+        <ContentCalendar posts={selectedCalendar.posts} onBack={handleBackToList} />
+      </div>
+    );
+  }
+  
+  if (savedCalendars.length === 0) {
     return (
       <Card className="max-w-md mx-auto my-8">
         <CardHeader>
@@ -112,19 +149,40 @@ export const CalendarManager = () => {
           </Button>
         </form>
         
-        <Button variant="outline" onClick={handleExportCalendar} className="ml-auto">
-          <Download className="mr-2 h-4 w-4" />
-          Export Calendar
+        <Button 
+          variant="default" 
+          onClick={handleCreateCalendar} 
+          className="ml-auto bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500"
+        >
+          <CalendarPlus className="mr-2 h-4 w-4" />
+          Create New Calendar
         </Button>
       </div>
       
-      <div className="border rounded-lg p-4">
-        <div className="flex items-center gap-2 mb-4">
-          <FileText className="h-5 w-5 text-purple-500" />
-          <h2 className="text-lg font-medium">Your Content Calendar</h2>
-        </div>
-        {/* Calendar content would be displayed here */}
-        <p className="text-muted-foreground text-sm">Your calendar content will appear here.</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {savedCalendars.map((calendar) => (
+          <Card key={calendar.id} className="overflow-hidden">
+            <CardHeader className="bg-gradient-to-br from-pink-500 to-purple-500 text-white">
+              <CardTitle className="text-lg">{calendar.name}</CardTitle>
+              <p className="text-xs opacity-90">Created on {new Date(calendar.created_at).toLocaleDateString()}</p>
+            </CardHeader>
+            <CardContent className="pt-4">
+              <p className="text-muted-foreground text-sm">
+                {calendar.posts.length} posts
+              </p>
+            </CardContent>
+            <CardFooter className="flex justify-between">
+              <Button variant="outline" size="sm" onClick={() => handleViewCalendar(calendar)}>
+                <Eye className="mr-2 h-4 w-4" />
+                View
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => handleExportCalendar(calendar)}>
+                <Download className="mr-2 h-4 w-4" />
+                Export
+              </Button>
+            </CardFooter>
+          </Card>
+        ))}
       </div>
     </div>
   );
