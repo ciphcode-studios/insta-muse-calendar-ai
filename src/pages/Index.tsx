@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import UserRegistration, { UserData } from "@/components/UserRegistration";
 import ContentPreferences, { ContentPreference } from "@/components/ContentPreferences";
 import ContentCalendar, { PostSuggestion } from "@/components/ContentCalendar";
+import InstagramCalendarForm, { CalendarFormData } from "@/components/InstagramCalendarForm";
 import { generateContentCalendar } from "@/services/contentGenerator";
 import { Toaster } from "sonner";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -16,6 +17,7 @@ import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 
 enum Step {
+  CalendarForm,
   Registration,
   Preferences,
   Calendar,
@@ -23,7 +25,7 @@ enum Step {
 
 const Index = () => {
   const { user } = useAuth();
-  const [currentStep, setCurrentStep] = useState<Step>(Step.Registration);
+  const [currentStep, setCurrentStep] = useState<Step>(Step.CalendarForm);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [preferences, setPreferences] = useState<ContentPreference | null>(null);
   const [posts, setPosts] = useState<PostSuggestion[]>([]);
@@ -66,6 +68,18 @@ const Index = () => {
     }
   };
 
+  const handleCalendarFormSubmit = async (formData: CalendarFormData) => {
+    // Convert form data to ContentPreference format
+    const contentPrefs: ContentPreference = {
+      contentTypes: ['lifestyle'], // Default content type
+      targetAudience: formData.name,
+      description: formData.contentDescription,
+      postFrequency: formData.postFrequency as any
+    };
+    
+    await handlePreferenceSubmit(contentPrefs);
+  };
+
   const handleBack = () => {
     setCurrentStep(Step.Preferences);
   };
@@ -106,7 +120,11 @@ const Index = () => {
           </Card>
         ) : (
           <>
-            {currentStep === Step.Registration && (
+            {user && currentStep === Step.CalendarForm && (
+              <InstagramCalendarForm onFormSubmit={handleCalendarFormSubmit} />
+            )}
+
+            {(!user || currentStep === Step.Registration) && (
               <>
                 <div className="text-center mb-8">
                   <h1 className="text-3xl font-bold">Create Your Instagram Content Calendar</h1>

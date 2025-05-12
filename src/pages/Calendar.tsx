@@ -4,6 +4,7 @@ import UserProfile from '@/components/UserProfile';
 import CalendarManager from '@/components/CalendarManager';
 import { Instagram } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 
 const Calendar = () => {
   return (
@@ -17,7 +18,14 @@ const Calendar = () => {
             Insta Content Planner
           </h1>
         </Link>
-        <UserProfile />
+        <div className="flex items-center space-x-4">
+          <Link to="/">
+            <Button variant="outline" className="flex items-center space-x-2">
+              <span>Create New Calendar</span>
+            </Button>
+          </Link>
+          <UserProfile />
+        </div>
       </header>
 
       <main className="container mx-auto px-4 py-8">
