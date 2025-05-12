@@ -4,7 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Search, Download, FileText, CalendarPlus, Eye, Calendar } from 'lucide-react';
+import { Search, Download, FileText, CalendarPlus, Eye, Calendar, ArrowLeft } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
