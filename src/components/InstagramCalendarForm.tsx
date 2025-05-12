@@ -69,9 +69,6 @@ const InstagramCalendarForm = ({ onFormSubmit }: InstagramCalendarFormProps) => 
       
       onFormSubmit(formData);
       
-      // Redirect to calendar page
-      navigate('/calendar');
-      
     } catch (error) {
       console.error("Error submitting form:", error);
       toast.error('Something went wrong. Please try again.');
