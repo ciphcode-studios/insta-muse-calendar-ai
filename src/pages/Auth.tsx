@@ -1,7 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,8 +10,9 @@ import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Auth = () => {
-  const { user, signIn, signUp } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
+  const { user, isLoading, signIn, signUp } = useAuth();
+  const [authLoading, setAuthLoading] = useState(false);
+  const location = useLocation();
   
   // Login form state
   const [loginEmail, setLoginEmail] = useState('');
@@ -23,43 +24,57 @@ const Auth = () => {
   const [registerUsername, setRegisterUsername] = useState('');
   
   // If user is already logged in, redirect to home
-  if (user) {
+  // Only redirect when we're sure authentication state is loaded
+  if (!isLoading && user) {
+    console.log("User authenticated, redirecting to home");
     return <Navigate to="/" />;
   }
   
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setAuthLoading(true);
     
-    const { error } = await signIn(loginEmail, loginPassword);
-    
-    if (error) {
-      toast.error(error.message);
+    try {
+      const { error } = await signIn(loginEmail, loginPassword);
+      
+      if (error) {
+        toast.error(error.message);
+      }
+    } finally {
+      setAuthLoading(false);
     }
-    
-    setIsLoading(false);
   };
   
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setAuthLoading(true);
     
-    if (registerPassword.length < 6) {
-      toast.error("Password must be at least 6 characters");
-      setIsLoading(false);
-      return;
+    try {
+      if (registerPassword.length < 6) {
+        toast.error("Password must be at least 6 characters");
+        return;
+      }
+      
+      const { error } = await signUp(registerEmail, registerPassword, registerUsername);
+      
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success("Registration successful! Please check your email to confirm your account.");
+      }
+    } finally {
+      setAuthLoading(false);
     }
-    
-    const { error } = await signUp(registerEmail, registerPassword, registerUsername);
-    
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success("Registration successful! Please check your email to confirm your account.");
-    }
-    
-    setIsLoading(false);
   };
+
+  // Show loading state when initial auth check is in progress
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-16 h-16 border-4 border-t-purple-500 border-r-transparent border-b-purple-500 border-l-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white flex items-center justify-center p-4">
@@ -107,9 +122,9 @@ const Auth = () => {
                 <Button 
                   type="submit" 
                   className="w-full mt-6 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 hover:from-pink-600 hover:via-purple-600 hover:to-blue-600"
-                  disabled={isLoading}
+                  disabled={authLoading}
                 >
-                  {isLoading ? "Signing in..." : "Sign In"}
+                  {authLoading ? "Signing in..." : "Sign In"}
                 </Button>
               </form>
             </TabsContent>
@@ -151,9 +166,9 @@ const Auth = () => {
                 <Button 
                   type="submit" 
                   className="w-full mt-6 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 hover:from-pink-600 hover:via-purple-600 hover:to-blue-600"
-                  disabled={isLoading}
+                  disabled={authLoading}
                 >
-                  {isLoading ? "Registering..." : "Create Account"}
+                  {authLoading ? "Registering..." : "Create Account"}
                 </Button>
               </form>
             </TabsContent>
