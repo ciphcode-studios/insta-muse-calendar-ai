@@ -61,7 +61,7 @@ const ContentCalendar = ({ posts, onBack }: ContentCalendarProps) => {
         .insert({
           user_id: user.id,
           name: calendarName,
-          posts: posts
+          posts: posts as unknown as any  // Type cast to satisfy TypeScript
         })
         .select('id')
         .single();

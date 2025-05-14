@@ -15,6 +15,8 @@ interface SavedCalendar {
   name: string;
   created_at: string;
   posts: PostSuggestion[];
+  user_id: string;
+  updated_at: string;
 }
 
 export const CalendarManager = () => {
@@ -42,7 +44,12 @@ export const CalendarManager = () => {
         }
         
         if (data) {
-          setSavedCalendars(data as SavedCalendar[]);
+          // Transform the JSON data to match our expected type
+          const calendars: SavedCalendar[] = data.map(calendar => ({
+            ...calendar,
+            posts: calendar.posts as unknown as PostSuggestion[]
+          }));
+          setSavedCalendars(calendars);
         }
       } catch (error) {
         console.error('Error fetching calendars:', error);
