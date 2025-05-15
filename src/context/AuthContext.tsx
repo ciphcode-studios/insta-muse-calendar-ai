@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -26,40 +25,55 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [authInitialized, setAuthInitialized] = useState(false);
   const navigate = useNavigate();
 
+  // Initialize auth only once when component mounts
   useEffect(() => {
-    // Avoid initializing auth more than once
-    if (authInitialized) return;
+    let mounted = true;
     
     const initializeAuth = async () => {
-      // First check for existing session
-      const { data: sessionData } = await supabase.auth.getSession();
-      console.log("Initial session check:", sessionData.session ? "Session found" : "No session");
-      setSession(sessionData.session);
-      setUser(sessionData.session?.user ?? null);
-      
-      // Then set up the auth state listener
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(
-        (event, newSession) => {
-          // Only update if the session actually changed
+      try {
+        // Check for existing session
+        const { data: sessionData } = await supabase.auth.getSession();
+        
+        if (mounted) {
+          console.log("Initial session check:", sessionData.session ? "Session found" : "No session");
+          setSession(sessionData.session);
+          setUser(sessionData.session?.user ?? null);
+          setIsLoading(false);
+        }
+        
+        // Set up auth state change listener
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
+          if (!mounted) return;
+          
+          console.log("Auth state change event:", event);
+          
+          // Only update state if there's an actual change in the session
           if (event !== 'INITIAL_SESSION') {
-            console.log("Auth state change event:", event);
             setSession(newSession);
             setUser(newSession?.user ?? null);
           }
+        });
+        
+        return () => {
+          mounted = false;
+          subscription.unsubscribe();
+        };
+      } catch (error) {
+        console.error("Auth initialization error:", error);
+        if (mounted) {
+          setIsLoading(false);
         }
-      );
-      
-      setIsLoading(false);
-      setAuthInitialized(true);
-      
-      return () => subscription.unsubscribe();
+      }
     };
     
     initializeAuth();
-  }, [authInitialized]);
+    
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const signUp = async (email: string, password: string, username: string) => {
     try {

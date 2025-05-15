@@ -1,7 +1,6 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +11,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 const Auth = () => {
   const { user, isLoading, signIn, signUp } = useAuth();
   const [authLoading, setAuthLoading] = useState(false);
-  const location = useLocation();
   
   // Login form state
   const [loginEmail, setLoginEmail] = useState('');
@@ -27,7 +25,7 @@ const Auth = () => {
   // Only redirect when we're sure authentication state is loaded
   if (!isLoading && user) {
     console.log("User authenticated, redirecting to home");
-    return <Navigate to="/" />;
+    return <Navigate to="/" replace />;
   }
   
   const handleLogin = async (e: React.FormEvent) => {
