@@ -19,9 +19,10 @@ export interface PostSuggestion {
 interface ContentCalendarProps {
   posts: PostSuggestion[];
   onBack: () => void;
+  calendarName: string; // Added calendarName prop
 }
 
-const ContentCalendar = ({ posts, onBack }: ContentCalendarProps) => {
+const ContentCalendar = ({ posts, onBack, calendarName }: ContentCalendarProps) => { // Added calendarName to destructuring
   const { user } = useAuth();
   const [currentWeek, setCurrentWeek] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
@@ -54,7 +55,7 @@ const ContentCalendar = ({ posts, onBack }: ContentCalendarProps) => {
     
     try {
       // Save the calendar to Supabase
-      const calendarName = `Instagram Calendar - ${new Date().toLocaleDateString()}`;
+            // const calendarName = `Instagram Calendar - ${new Date().toLocaleDateString()}`; // Use passed calendarName
       
       const { data: calendarData, error: calendarError } = await supabase
         .from('content_calendars')
@@ -121,7 +122,7 @@ const ContentCalendar = ({ posts, onBack }: ContentCalendarProps) => {
           <ArrowLeft className="mr-2 h-4 w-4" /> Back to Preferences
         </Button>
         <div className="text-center">
-          <h2 className="text-2xl font-bold">Your Content Calendar</h2>
+          <h2 className="text-2xl font-bold">{calendarName || 'Your Content Calendar'}</h2>
           <p className="text-muted-foreground">Week {currentWeek + 1} of {weeksCount}</p>
         </div>
         <div className="flex space-x-2">

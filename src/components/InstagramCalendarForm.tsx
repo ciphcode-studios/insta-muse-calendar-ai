@@ -16,36 +16,42 @@ interface InstagramCalendarFormProps {
 }
 
 export interface CalendarFormData {
-  name: string;
-  instagramHandle: string;
+  calendarName: string; // Added calendarName
   postFrequency: string;
+  targetAudience: string;
   contentDescription: string;
+  postType: string; // Added for Gemini
+  tone: string;     // Added for Gemini
 }
 
 const InstagramCalendarForm = ({ onFormSubmit }: InstagramCalendarFormProps) => {
   const { user } = useAuth();
-  const [name, setName] = useState('');
-  const [instagramHandle, setInstagramHandle] = useState('');
+  const [calendarName, setCalendarName] = useState(''); // Added state for calendarName
   const [postFrequency, setPostFrequency] = useState('weekly');
+  const [targetAudience, setTargetAudience] = useState('');
   const [contentDescription, setContentDescription] = useState('');
+  const [postType, setPostType] = useState('Single Image'); // Added state for postType
+  const [tone, setTone] = useState('Informative'); // Added state for tone
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!name || !instagramHandle || !contentDescription) {
-      toast.error("Please fill out all fields");
+    if (!calendarName || !targetAudience || !contentDescription || !postType || !tone) { // Added postType and tone to validation
+      toast.error("Please fill out all fields, including calendar name, post type, and tone.");
       return;
     }
     
     setIsLoading(true);
     
     const formData = {
-      name,
-      instagramHandle,
+      calendarName, // Added calendarName to formData
       postFrequency,
-      contentDescription
+      targetAudience,
+      contentDescription,
+      postType, // Added postType to formData
+      tone      // Added tone to formData
     };
     
     try {
@@ -53,10 +59,10 @@ const InstagramCalendarForm = ({ onFormSubmit }: InstagramCalendarFormProps) => 
       if (user) {
         const { error } = await supabase.from('content_preferences').upsert({
           user_id: user.id,
-          content_type: instagramHandle, // Map to existing column content_type
-          target_audience: name, // Map to existing column target_audience 
-          industry: contentDescription, // Map to existing column industry
-          tone: postFrequency // Map to existing column tone
+          content_type: 'general', // Defaulting as instagramHandle is removed
+          target_audience: targetAudience, 
+          industry: contentDescription, 
+          tone: postFrequency
         });
         
         if (error) {
@@ -93,27 +99,15 @@ const InstagramCalendarForm = ({ onFormSubmit }: InstagramCalendarFormProps) => 
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <label htmlFor="name" className="text-sm font-medium">What's Your Name?</label>
+            <label htmlFor="calendarName" className="text-sm font-medium">Calendar Name</label>
             <Input
-              id="name"
-              placeholder="Your name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              id="calendarName"
+              placeholder="E.g., My Awesome Instagram Plan"
+              value={calendarName}
+              onChange={(e) => setCalendarName(e.target.value)}
               required
             />
           </div>
-          
-          <div className="space-y-2">
-            <label htmlFor="instagramHandle" className="text-sm font-medium">What's your Instagram handle?</label>
-            <Input
-              id="instagramHandle"
-              placeholder="@yourhandle"
-              value={instagramHandle}
-              onChange={(e) => setInstagramHandle(e.target.value)}
-              required
-            />
-          </div>
-          
           <div className="space-y-2">
             <label htmlFor="postFrequency" className="text-sm font-medium">Post Frequency</label>
             <Tabs defaultValue="weekly" className="w-full" onValueChange={setPostFrequency}>
@@ -124,7 +118,31 @@ const InstagramCalendarForm = ({ onFormSubmit }: InstagramCalendarFormProps) => 
               </TabsList>
             </Tabs>
           </div>
-          
+
+          <div className="space-y-2">
+            <label htmlFor="postType" className="text-sm font-medium">Default Post Type</label>
+            <Tabs defaultValue="Single Image" className="w-full" onValueChange={setPostType}>
+              <TabsList className="grid grid-cols-4 w-full">
+                <TabsTrigger value="Single Image">Single Image</TabsTrigger>
+                <TabsTrigger value="Carousel">Carousel</TabsTrigger>
+                <TabsTrigger value="Reel">Reel</TabsTrigger>
+                <TabsTrigger value="Story">Story</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="tone" className="text-sm font-medium">Desired Tone</label>
+            <Tabs defaultValue="Informative" className="w-full" onValueChange={setTone}>
+              <TabsList className="grid grid-cols-4 w-full">
+                <TabsTrigger value="Informative">Informative</TabsTrigger>
+                <TabsTrigger value="Humorous">Humorous</TabsTrigger>
+                <TabsTrigger value="Inspirational">Inspirational</TabsTrigger>
+                <TabsTrigger value="Promotional">Promotional</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+
           <div className="space-y-2">
             <label htmlFor="contentDescription" className="text-sm font-medium">
               Briefly describe the type of content you want to publish
@@ -134,7 +152,19 @@ const InstagramCalendarForm = ({ onFormSubmit }: InstagramCalendarFormProps) => 
               placeholder="E.g., Fashion trends, fitness tips, food recipes..."
               value={contentDescription}
               onChange={(e) => setContentDescription(e.target.value)}
-              rows={4}
+              rows={6} 
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="targetAudience" className="text-sm font-medium">Choose your target audience</label>
+            <Textarea
+              id="targetAudience"
+              placeholder="E.g., Young professionals, students, parents..."
+              value={targetAudience}
+              onChange={(e) => setTargetAudience(e.target.value)}
+              rows={3} 
               required
             />
           </div>
