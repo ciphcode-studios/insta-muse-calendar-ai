@@ -4,6 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { LogOut } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const UserProfile = () => {
   const { user, signOut } = useAuth();
@@ -21,7 +22,7 @@ const UserProfile = () => {
         <AvatarImage src={user.user_metadata?.avatar_url} alt={username} />
         <AvatarFallback>{initials}</AvatarFallback>
       </Avatar>
-      <span className="text-sm font-medium hidden md:inline">{username}</span>
+      <Link to="/profile" className="text-sm font-medium hidden md:inline hover:underline">{username}</Link>
       <Button variant="ghost" size="icon" onClick={signOut} title="Logout">
         <LogOut className="h-4 w-4" />
       </Button>
