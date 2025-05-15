@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -25,29 +26,40 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [authInitialized, setAuthInitialized] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Set up the auth state listener first
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log("Auth state change event:", event);
-        setSession(session);
-        setUser(session?.user ?? null);
-        setIsLoading(false);
-      }
-    );
-
-    // Then check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log("Initial session check:", session ? "Session found" : "No session");
-      setSession(session);
-      setUser(session?.user ?? null);
+    // Avoid initializing auth more than once
+    if (authInitialized) return;
+    
+    const initializeAuth = async () => {
+      // First check for existing session
+      const { data: sessionData } = await supabase.auth.getSession();
+      console.log("Initial session check:", sessionData.session ? "Session found" : "No session");
+      setSession(sessionData.session);
+      setUser(sessionData.session?.user ?? null);
+      
+      // Then set up the auth state listener
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        (event, newSession) => {
+          // Only update if the session actually changed
+          if (event !== 'INITIAL_SESSION') {
+            console.log("Auth state change event:", event);
+            setSession(newSession);
+            setUser(newSession?.user ?? null);
+          }
+        }
+      );
+      
       setIsLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+      setAuthInitialized(true);
+      
+      return () => subscription.unsubscribe();
+    };
+    
+    initializeAuth();
+  }, [authInitialized]);
 
   const signUp = async (email: string, password: string, username: string) => {
     try {
