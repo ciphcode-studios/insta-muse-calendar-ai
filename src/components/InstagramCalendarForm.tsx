@@ -87,7 +87,7 @@ const InstagramCalendarForm = ({ onFormSubmit }: InstagramCalendarFormProps) => 
           Create Your Instagram Calendar
         </CardTitle>
         <CardDescription className="text-center">
-          Tell us about your Instagram content needs
+          Provide us some details about your target audience, content type, and tone to generate a customized content calendar for your Instagram
         </CardDescription>
       </CardHeader>
       <CardContent>
